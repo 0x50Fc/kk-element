@@ -15,7 +15,10 @@
 
 namespace kk {
     
+    typedef char Byte;
+    typedef unsigned char Ubyte;
     typedef int Int;
+    typedef int Int32;
     typedef unsigned char Uint8;
     typedef unsigned Uint;
     typedef long long Int64;

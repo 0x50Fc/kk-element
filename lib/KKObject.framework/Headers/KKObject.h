@@ -2,7 +2,7 @@
 //  KKObject.h
 //  KKObject
 //
-//  Created by hailong11 on 2018/8/7.
+//  Created by zhanghailong on 2018/8/7.
 //  Copyright © 2018年 kkmofang.cn. All rights reserved.
 //
 
@@ -20,4 +20,4 @@
 #include <KKObject/kk-crypto.h>
 #include <KKObject/kk-wk.h>
 #include <KKObject/kk-ws.h>
-
+#include <KKObject/kk-bio.h>

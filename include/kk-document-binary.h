@@ -42,6 +42,7 @@ namespace kk {
         static size_t decode(Document * document,Byte * data, size_t size);
         
         virtual duk_ret_t duk_data(duk_context * ctx);
+        virtual duk_ret_t duk_encode(duk_context * ctx);
         
         static duk_ret_t duk_decode(duk_context * ctx);
         

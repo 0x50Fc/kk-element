@@ -95,7 +95,7 @@ namespace kk {
         return 0;
     }
     
-    IMP_SCRIPT_CLASS_BEGIN(&EventEmitter::ScriptClass, Element, Element)
+    IMP_SCRIPT_CLASS_BEGIN_NOALLOC(&EventEmitter::ScriptClass, Element, Element)
     
     static kk::script::Method methods[] = {
         {"get",(kk::script::Function) &Element::duk_get},
@@ -126,9 +126,6 @@ namespace kk {
     
     IMP_SCRIPT_CLASS_END
     
-    Element::Element():_elementId(0) {
-        
-    }
     
     Element::Element(Document * document,CString name, ElementKey elementId)
         :_document(document),_name(name),_elementId(elementId) {
@@ -387,7 +384,7 @@ namespace kk {
         
     }
     
-    void Element::set(CString key,CString value) {
+    void Element::set(ElementKey key,CString value) {
         Document * v = document();
         if(v == nullptr) {
             return;
@@ -395,15 +392,15 @@ namespace kk {
         set(v->key(key),value);
     }
     
-    CString Element::get(ElementKey key) {
-        std::map<ElementKey,String>::iterator i = _attributes.find(key);
+    CString Element::get(CString key) {
+        std::map<String,String>::iterator i = _attributes.find(key);
         if(i != _attributes.end()) {
             return i->second.c_str();
         }
         return nullptr;
     }
     
-    CString Element::get(CString key) {
+    CString Element::get(ElementKey key) {
         Document * v = document();
         if(v == nullptr) {
             return nullptr;
@@ -411,11 +408,11 @@ namespace kk {
         return get(v->key(key));
     }
     
-    void Element::set(ElementKey key,CString value) {
+    void Element::set(CString key,CString value) {
         
         if(value == nullptr) {
             
-            std::map<ElementKey,String>::iterator i = _attributes.find(key);
+            std::map<String,String>::iterator i = _attributes.find(key);
             
             if(i != _attributes.end()) {
                 _attributes.erase(i);
@@ -433,7 +430,7 @@ namespace kk {
                 DocumentObserver * observer = v->getObserver();
                 
                 if(observer) {
-                    observer->set(v, this,key,value);
+                    observer->set(v, this,v->elementKey(key),value);
                 }
                 
             }
@@ -441,7 +438,7 @@ namespace kk {
         }
     }
     
-    std::map<ElementKey,String> & Element::attributes() {
+    std::map<String,String> & Element::attributes() {
         return _attributes;
     }
     
@@ -459,6 +456,11 @@ namespace kk {
             Element * p = parent();
             if(p) {
                 p->emit(name, event);
+            } else  {
+                Document * doc = document();
+                if(doc) {
+                    doc->emit(name,event);
+                }
             }
         }
         
@@ -695,6 +697,7 @@ namespace kk {
         
         return 0;
     }
+    
     
 }
 

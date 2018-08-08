@@ -6,7 +6,8 @@
 //  Copyright © 2018年 kkmofang.cn. All rights reserved.
 //
 
-#import <KKObject/KKObject.h>
-#import <KKElement/kk-docuemnt.h>
-
-
+#include <KKObject/KKObject.h>
+#include <KKElement/kk-document.h>
+#include <KKElement/kk-element.h>
+#include <KKElement/kk-element-style.h>
+#include <KKElement/kk-document-binary.h>

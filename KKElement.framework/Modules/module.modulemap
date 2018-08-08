@@ -1,0 +1,6 @@
+framework module KKElement {
+  umbrella header "KKElement.h"
+
+  export *
+  module * { export * }
+}

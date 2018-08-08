@@ -10,9 +10,11 @@
 #include "kk-config.h"
 #include "kk-element-style.h"
 
+#include <typeinfo>
+
 namespace kk {
     
-    IMP_SCRIPT_CLASS_BEGIN(&Element::ScriptClass, StyleElement, StyleElement)
+    IMP_SCRIPT_CLASS_BEGIN_NOALLOC(&Element::ScriptClass, StyleElement, StyleElement)
     
     static kk::script::Method methods[] = {
         {"addStatus",(kk::script::Function) &StyleElement::duk_addStatus},
@@ -25,26 +27,22 @@ namespace kk {
     
     IMP_SCRIPT_CLASS_END
     
-    StyleElement::StyleElement():kk::Element(),_keyInStatus(0),_keyStatus(0) {
-        
+    StyleElement::StyleElement(Document * document,CString name, ElementKey elementId):kk::Element(document,name,elementId) {
+
     }
     
-    StyleElement::StyleElement(Document * document,CString name, ElementKey elementId):kk::Element(document,name,elementId) {
-        _keyStatus = document->key("status");
-        _keyInStatus = document->key("in-status");
-    }
+    KK_IMP_ELEMENT_CREATE(StyleElement)
     
     CString StyleElement::status() {
-        CString v = Element::get(_keyStatus);
+        CString v = Element::get("status");
         if(v == nullptr) {
-            v = Element::get(_keyInStatus);
+            v = Element::get("in-status");
         }
         return v;
     }
     
     void StyleElement::setStatus(CString status) {
-        set(_keyStatus,status);
-        changedStatus();
+        set("status",status);
     }
     
     void StyleElement::addStatus(CString status) {
@@ -54,7 +52,7 @@ namespace kk {
         std::set<String> vs;
         
         {
-            CString v = Element::get(_keyStatus);
+            CString v = Element::get("status");
             
             if(v != nullptr) {
                 CStringSplit(v, " ", vs);
@@ -67,7 +65,7 @@ namespace kk {
             if(i == vs.end()) {
                 vs.insert(s);
                 String v = CStringJoin(vs, " ");
-                Element::set(_keyStatus,v.c_str());
+                Element::set("status",v.c_str());
             }
         }
     }
@@ -77,7 +75,7 @@ namespace kk {
         std::set<String> vs;
         
         {
-            CString v = Element::get(_keyStatus);
+            CString v = Element::get("status");
             
             if(v != nullptr) {
                 CStringSplit(v, " ", vs);
@@ -88,7 +86,7 @@ namespace kk {
             if(i != vs.end()) {
                 vs.erase(i);
                 String v = CStringJoin(vs, " ");
-                Element::set(_keyStatus,v.c_str());
+                Element::set("status",v.c_str());
             }
         }
     }
@@ -98,7 +96,7 @@ namespace kk {
         std::set<String> vs;
         
         {
-            CString v = Element::get(_keyStatus);
+            CString v = Element::get("status");
             
             if(v != nullptr) {
                 CStringSplit(v, " ", vs);
@@ -113,20 +111,24 @@ namespace kk {
         return false;
     }
     
+    void StyleElement::changedKey(String& key) {
+        
+    }
+    
     void StyleElement::changedKeys(std::set<String>& keys) {
-
+        std::set<String>::iterator i = keys.begin();
+        while(i != keys.end()) {
+            String v = * i;
+            changedKey(v);
+            i ++;
+        }
     }
     
-    void StyleElement::set(ElementKey key,CString value) {
-        Element::set(key, value);
-    }
-    
-    void StyleElement::set(CString key,CString value) {
-        Element::set(key, value);
+    void StyleElement::change(kk::CString key,CString value) {
         if(CStringEqual(key, "status") || CStringEqual(key, "in-status")) {
             changedStatus();
         } else if(CStringEqual(key, "style") || CStringHasPrefix(key, "style:")) {
-        
+            
             String name = key;
             
             if(CStringHasPrefix(key, "style:")) {
@@ -136,7 +138,7 @@ namespace kk {
             }
             
             std::set<String> keys;
-            std::map<String,String> & style = this->style(name);
+            std::map<String,String> & style = this->style(name.c_str());
             std::vector<String> items;
             
             CStringSplit(value, ";", items);
@@ -161,6 +163,15 @@ namespace kk {
             keys.insert(key);
             changedKeys(keys);
         }
+    }
+    
+    void StyleElement::set(ElementKey key,CString value) {
+        Element::set(key, value);
+    }
+    
+    void StyleElement::set(CString key,CString value) {
+        Element::set(key, value);
+        change(key, value);
     }
     
     CString StyleElement::get(ElementKey key) {
@@ -215,7 +226,7 @@ namespace kk {
         
         vs.push_back("");
         
-        CString value = Element::get(_keyStatus);
+        CString value = Element::get("status");
         
         if(value != nullptr) {
             CStringSplit(value, " ", vs);
@@ -246,9 +257,9 @@ namespace kk {
                 StyleElement * ee = dynamic_cast<StyleElement *>(e);
                 
                 if(ee) {
-                    CString v = e->get(_keyStatus);
+                    CString v = e->get("status");
                     if(v == nullptr) {
-                        ee->set(_keyInStatus, value);
+                        ee->set("in-status", value);
                     }
                 }
                 e = e->nextSibling();
@@ -256,10 +267,6 @@ namespace kk {
         }
     }
 
-    Element * StyleElement::Create(Document * document,CString name, ElementKey elementId) {
-        return new StyleElement(document,name,elementId);;
-    }
-    
     duk_ret_t StyleElement::duk_addStatus(duk_context * ctx) {
         
         int top = duk_get_top(ctx);
@@ -299,6 +306,19 @@ namespace kk {
         }
         
         return 0;
+    }
+    
+    std::map<String,String> & StyleElement::style(CString name) {
+        
+        std::map<String,std::map<String,String>>::iterator i = _styles.find(name);
+        
+        if(i == _styles.end()) {
+            _styles[name] = std::map<String,String>();
+        } else {
+            return i->second;
+        }
+        
+        return _styles[name];
     }
     
 }

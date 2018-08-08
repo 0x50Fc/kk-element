@@ -24,7 +24,7 @@ namespace kk {
     kk::script::SetMethod(ctx, -1, methods, sizeof(methods) / sizeof(kk::script::Method));
     
     static kk::script::Property propertys[] = {
-        {"duk_rootElement",(kk::script::Function) &Document::duk_rootElement,(kk::script::Function) &Document::duk_setRootElement},
+        {"rootElement",(kk::script::Function) &Document::duk_rootElement,(kk::script::Function) &Document::duk_setRootElement},
     };
     
     kk::script::SetProperty(ctx, -1, propertys, sizeof(propertys) / sizeof(kk::script::Property));
@@ -47,6 +47,29 @@ namespace kk {
     
     void Document::setRootElement(Element * element) {
         _rootElement = element;
+        
+        {
+            DocumentObserver * observer = getObserver();
+            
+            if(observer) {
+                observer->root(this, element);
+            }
+        }
+        
+    }
+    
+    Strong Document::element(ElementKey elementId) {
+        Strong v;
+        std::map<ElementKey,Weak>::iterator i = _elements.find(elementId);
+        if(i != _elements.end()) {
+            Element * e = (Element *) i->second.get();
+            if(e == nullptr) {
+                _elements.erase(i);
+            } else {
+                v = e;
+            }
+        }
+        return v;
     }
     
     Strong Document::createElement(CString name,ElementKey elementId) {
@@ -72,6 +95,8 @@ namespace kk {
         } else {
             v = new Element(this,name,elementId);
         }
+        
+        _elements[elementId] = v.get();
 
         {
             DocumentObserver * observer = getObserver();
@@ -93,13 +118,24 @@ namespace kk {
         _createElementFuncs[name] = func;
     }
     
-    ElementKey Document::key(CString name) {
+    kk::CString Document::key(ElementKey key) {
+        std::map<ElementKey,String>::iterator i = _elementKeys.find(key);
+        if(i != _elementKeys.end()) {
+            return i->second.c_str();
+        }
+        return nullptr;
+    }
+    
+    ElementKey Document::elementKey(CString name) {
         
-        std::map<String,ElementKey>::iterator i = _elementKeys.find(name);
+        std::map<String,ElementKey>::iterator i = _keys.find(name);
         
-        if(i == _elementKeys.end()) {
+        if(i == _keys.end()) {
+            
             ElementKey key = ++ _autoKey;
-            _elementKeys[name] = key;
+            
+            _keys[name] = key;
+            _elementKeys[key] = name;
             
             {
                 DocumentObserver * observer = getObserver();
@@ -234,7 +270,12 @@ namespace kk {
         if(key > _autoKey) {
             _autoKey = key;
         }
-        _elementKeys[name] = key;
+        _keys[name] = key;
+        _elementKeys[key] = name;
+    }
+    
+    std::map<ElementKey,String> & Document::elementKeys() {
+        return _elementKeys;
     }
     
 }

@@ -24,12 +24,12 @@
 
 namespace kk {
     
-    static char TAG[] = {'K','D','B','1','0','_'};
+    static char TAG[] = {'K','K',0x00,0x00};
     
     IMP_SCRIPT_CLASS_BEGIN(nullptr, DocumentBinaryObserver, DocumentBinaryObserver)
     
     static kk::script::Method methods[] = {
-        {"duk_data",(kk::script::Function) &DocumentBinaryObserver::duk_data},
+        {"data",(kk::script::Function) &DocumentBinaryObserver::duk_data},
     };
     
     kk::script::SetMethod(ctx, -1, methods, sizeof(methods) / sizeof(kk::script::Method));
@@ -101,6 +101,56 @@ namespace kk {
         append((CString)name);
     }
     
+    static void encodeAttributes(DocumentBinaryObserver * observer,Document * document, Element * element) {
+    
+        std::map<String,String> & attrs = element->attributes();
+        std::map<String,String>::iterator i = attrs.begin();
+        
+        while(i != attrs.end()) {
+            observer->set(document, element, document->elementKey(i->first.c_str()), i->second.c_str());
+            i ++;
+        }
+        
+    }
+    
+    static void encodeElement(DocumentBinaryObserver * observer,Document * document, Element * element) {
+        
+        observer->alloc(document, element);
+        
+        encodeAttributes(observer,document,element);
+        
+        Element * p = element->firstChild();
+        
+        while(p) {
+            encodeElement(observer, document, p);
+            p = p->nextSibling();
+        }
+        
+    }
+    
+    void DocumentBinaryObserver::encode(Document * document) {
+        
+        {
+            std::map<ElementKey,String> & keys = document->elementKeys();
+            std::map<ElementKey,String>::iterator i = keys.begin();
+            while(i != keys.end()) {
+                this->key(document, i->first, i->second.c_str());
+            }
+        }
+        
+        {
+            Element * p = document->rootElement();
+            
+            if(p != nullptr) {
+                encodeElement(this,document,p);
+            }
+            
+            this->root(document, p);
+            
+        }
+        
+    }
+    
     Byte * DocumentBinaryObserver::data() {
         return _data;
     }
@@ -163,7 +213,7 @@ namespace kk {
     }
     
     void DocumentBinaryObserver::presize(size_t length) {
-        if(_length + length < _size) {
+        if(_length + length > _size) {
             _size = MAX(sizeof(TAG) + _length + length,_size +BUF_EX_SIZE);
             if(_data == nullptr) {
                 _data = (Byte *) malloc(_size);
@@ -227,16 +277,9 @@ namespace kk {
                     
                     n += Bio::decode(& elementId, data + n, size - n);
                     
-                    std::map<ElementKey,Strong>::iterator i = elements.find(elementId);
-                    
-                    if(i != elements.end()) {
-                        
-                        document->setRootElement((Element *)i->second.get());
-                        
-                    } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [ROOT]");
-                        break;
-                    }
+                    Strong e = document->element(elementId);
+     
+                    document->setRootElement((Element *) e.get());
                     
                 } else {
                     break;
@@ -254,13 +297,12 @@ namespace kk {
                     n += Bio::decode(& key, data + n, size - n);
                     n += Bio::decode(& length, data + n, size - n);
                     
-                    std::map<ElementKey,Strong>::iterator i = elements.find(elementId);
+                    Strong e = document->element(elementId);
+                    Element * element = (Element *) e.get();
                     
-                    if(i != elements.end()) {
-                        
-                        Element * e = (Element *) i->second.get();
-                        
-                        e->set(key, length == 0 ? nullptr : data + n);
+                    if(element != nullptr) {
+                    
+                        element->set(key, length == 0 ? nullptr : data + n);
                         
                     } else {
                         kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [SET]");
@@ -282,17 +324,16 @@ namespace kk {
                     n += Bio::decode(& elementId, data + n, size - n);
                     n += Bio::decode(& eid, data + n, size - n);
                     
-                    std::map<ElementKey,Strong>::iterator i = elements.find(elementId);
+                    Strong e = document->element(elementId);
+                    Element * element = (Element *) e.get();
                     
-                    if(i != elements.end()) {
+                    if(element != nullptr) {
                         
-                        Element * element = (Element *) i->second.get();
+                        Strong ee = document->element(eid);
+                        Element * el = (Element *) ee.get();
                         
-                        i = elements.find(eid);
-                        
-                        if(i != elements.end()) {
-                            Element * e = (Element *) i->second.get();
-                            element->append(e);
+                        if(el != nullptr) {
+                            element->append(el);
                         }
                         
                     } else {
@@ -313,21 +354,20 @@ namespace kk {
                     n += Bio::decode(& elementId, data + n, size - n);
                     n += Bio::decode(& eid, data + n, size - n);
                     
-                    std::map<ElementKey,Strong>::iterator i = elements.find(elementId);
+                    Strong e = document->element(elementId);
+                    Element * element = (Element *) e.get();
                     
-                    if(i != elements.end()) {
+                    if(element != nullptr) {
                         
-                        Element * element = (Element *) i->second.get();
+                        Strong ee = document->element(eid);
+                        Element * el = (Element *) ee.get();
                         
-                        i = elements.find(eid);
-                        
-                        if(i != elements.end()) {
-                            Element * e = (Element *) i->second.get();
-                            element->before(e);
+                        if(el != nullptr) {
+                            element->before(el);
                         }
                         
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND]");
+                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [BEFORE]");
                         break;
                     }
                     
@@ -344,21 +384,20 @@ namespace kk {
                     n += Bio::decode(& elementId, data + n, size - n);
                     n += Bio::decode(& eid, data + n, size - n);
                     
-                    std::map<ElementKey,Strong>::iterator i = elements.find(elementId);
+                    Strong e = document->element(elementId);
+                    Element * element = (Element *) e.get();
                     
-                    if(i != elements.end()) {
+                    if(element != nullptr) {
                         
-                        Element * element = (Element *) i->second.get();
+                        Strong ee = document->element(eid);
+                        Element * el = (Element *) ee.get();
                         
-                        i = elements.find(eid);
-                        
-                        if(i != elements.end()) {
-                            Element * e = (Element *) i->second.get();
-                            element->after(e);
+                        if(el != nullptr) {
+                            element->after(el);
                         }
                         
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND]");
+                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [AFTER]");
                         break;
                     }
                     
@@ -373,40 +412,15 @@ namespace kk {
                     
                     n += Bio::decode(& elementId, data + n, size - n);
                     
-                    std::map<ElementKey,Strong>::iterator i = elements.find(elementId);
+                    Strong e = document->element(elementId);
+                    Element * element = (Element *) e.get();
                     
-                    if(i != elements.end()) {
-                        
-                        Element * element = (Element *) i->second.get();
-                        
-                        element->remove();
-                        
-                    } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND]");
-                        break;
-                    }
-                    
-                } else {
-                    break;
-                }
-            } else if(v == DocumentObserverTypeRemove) {
-                
-                if(size - n >= Bio::Int64_Size) {
-                    
-                    Int64 elementId = 0;
-                    
-                    n += Bio::decode(& elementId, data + n, size - n);
-                    
-                    std::map<ElementKey,Strong>::iterator i = elements.find(elementId);
-                    
-                    if(i != elements.end()) {
-                        
-                        Element * element = (Element *) i->second.get();
+                    if(element != nullptr) {
                         
                         element->remove();
                         
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND]");
+                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [REMOVE]");
                         break;
                     }
                     
@@ -485,6 +499,31 @@ namespace kk {
                     Byte * bytes = (Byte *) duk_get_buffer_data(ctx, - top + 1, &n);
                     
                     DocumentBinaryObserver::decode(doc, bytes, n);
+                    
+                }
+                
+            }
+        }
+        
+        return 0;
+        
+    }
+    
+    duk_ret_t DocumentBinaryObserver::duk_encode(duk_context * ctx) {
+        
+        int top = duk_get_top(ctx);
+        
+        if(top > 0 && duk_is_object(ctx, -top) ) {
+            
+            kk::Object * v = kk::script::GetObject(ctx, -top);
+            
+            if(v) {
+                
+                Document * doc = dynamic_cast<Document *>(v);
+                
+                if(doc) {
+                    
+                    encode(doc);
                     
                 }
                 

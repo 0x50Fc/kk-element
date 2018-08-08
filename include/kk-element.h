@@ -19,6 +19,15 @@
 
 #endif
 
+#define KK_DEF_ELEMENT_CREATE(isa) public: \
+isa(kk::Document * document,kk::CString name, kk::ElementKey elementId); \
+static kk::Element * Create(kk::Document * document,kk::CString name, kk::ElementKey elementId);
+
+#define KK_IMP_ELEMENT_CREATE(isa) \
+kk::Element * isa::Create(kk::Document * document,kk::CString name, kk::ElementKey elementId) {\
+    return new isa(document,name,elementId);\
+}
+
 namespace kk {
     
     class ElementEvent : public Event {
@@ -66,7 +75,7 @@ namespace kk {
         virtual CString get(CString key);
         virtual void set(ElementKey key,CString value);
         virtual void set(CString key,CString value);
-        virtual std::map<ElementKey,String> & attributes();
+        virtual std::map<String,String> & attributes();
         
         
         virtual void emit(String name,Event * event);
@@ -93,7 +102,7 @@ namespace kk {
         virtual duk_ret_t duk_object(duk_context * ctx);
         virtual duk_ret_t duk_setObject(duk_context * ctx);
         
-        DEF_SCRIPT_CLASS
+        DEF_SCRIPT_CLASS_NOALLOC
         
     protected:
         virtual void onDidAddChildren(Element * element);
@@ -102,7 +111,6 @@ namespace kk {
         virtual void onWillRemoveFromParent(Element * element);
         
     protected:
-        Element();
         Weak _document;
         ElementKey _elementId;
         String _name;
@@ -113,7 +121,7 @@ namespace kk {
         Weak _prevSibling;
         Weak _parent;
         
-        std::map<ElementKey,String> _attributes;
+        std::map<String,String> _attributes;
         std::map<String,Strong> _objects;
     };
     
