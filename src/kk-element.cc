@@ -11,6 +11,14 @@
 #include "kk-document.h"
 #include "kk-element.h"
 
+#if defined(KK_PLATFORM_IOS)
+
+#else
+
+#include "kk-string.h"
+
+#endif
+
 namespace kk {
     
     IMP_SCRIPT_CLASS_BEGIN(&Event::ScriptClass, ElementEvent, ElementEvent)
@@ -109,6 +117,7 @@ namespace kk {
         {"afterTo",(kk::script::Function) &Element::duk_afterTo},
         {"object",(kk::script::Function) &Element::duk_object},
         {"setObject",(kk::script::Function) &Element::duk_setObject},
+        {"toString",(kk::script::Function) &Element::duk_toString},
     };
     
     kk::script::SetMethod(ctx, -1, methods, sizeof(methods) / sizeof(kk::script::Method));
@@ -128,7 +137,7 @@ namespace kk {
     
     
     Element::Element(Document * document,CString name, ElementKey elementId)
-        :_document(document),_name(name),_elementId(elementId) {
+        :_document(document),_name(name),_elementId(elementId),_depth(0) {
         
     }
     
@@ -314,7 +323,6 @@ namespace kk {
         
         if(prevSibling) {
             parent->onWillRemoveChildren(this);
-            
             prevSibling->_nextSibling = nextSibling;
             if(nextSibling) {
                 nextSibling->_prevSibling = prevSibling;
@@ -323,7 +331,6 @@ namespace kk {
             }
         } else if(parent) {
             parent->onWillRemoveChildren(this);
-            
             parent->_firstChild = nextSibling;
             if(nextSibling) {
                 nextSibling->_prevSibling = (Element *) nullptr;
@@ -331,6 +338,10 @@ namespace kk {
                 parent->_lastChild = (Element *) nullptr;
             }
         }
+        
+        _parent = nullptr;
+        _prevSibling = nullptr;
+        _nextSibling = nullptr;
         
         if(parent) {
             {
@@ -370,10 +381,12 @@ namespace kk {
     
     void Element::onDidAddChildren(Element * element) {
         element->onDidAddToParent(this);
+        element->_depth = _depth + 1;
     }
     
     void Element::onWillRemoveChildren(Element * element) {
         element->onWillRemoveFromParent(this);
+        element->_depth = 0;
     }
     
     void Element::onDidAddToParent(Element * element) {
@@ -395,7 +408,8 @@ namespace kk {
     CString Element::get(CString key) {
         std::map<String,String>::iterator i = _attributes.find(key);
         if(i != _attributes.end()) {
-            return i->second.c_str();
+            String &v = i->second;
+            return v.c_str();
         }
         return nullptr;
     }
@@ -476,6 +490,12 @@ namespace kk {
         
         if(p != nullptr) {
             return p->hasBubble(name);
+        }
+        
+        Document * doc = document();
+        
+        if(doc != nullptr) {
+            return doc->has(name);
         }
         
         return false;
@@ -696,6 +716,66 @@ namespace kk {
         }
         
         return 0;
+    }
+    
+    String Element::toString() {
+        String v;
+        
+        for(int i=0;i<_depth;i++) {
+            v.append("\t");
+        }
+        
+        v.append("<").append(_name);
+        
+        std::map<String,String>::iterator i = _attributes.begin();
+        
+        while(i != _attributes.end()) {
+            
+            if(!kk::CStringHasPrefix(i->first.c_str(), "#")) {
+                v.append(" ").append(i->first).append("=\"").append(i->second).append("\"");
+            }
+            
+            i ++;
+        }
+        
+        v.append(">");
+        
+        Element * e = firstChild();
+        
+        if(e) {
+            
+            while(e) {
+                
+                v.append("\n");
+                
+                v.append(e->toString());
+                
+                e = e->nextSibling();
+                
+            }
+            
+            v.append("\n");
+            
+            for(int i=0;i<_depth;i++) {
+                v.append("\t");
+            }
+            
+        } else {
+            CString vv = get("#text");
+            if(vv) {
+                v.append(vv);
+            }
+        }
+        
+        v.append("</").append(_name).append(">");
+        
+        return v;
+    }
+    
+    duk_ret_t Element::duk_toString(duk_context * ctx) {
+        String v = toString();
+        duk_push_lstring(ctx, v.c_str(), v.size());
+        return 1;
     }
     
     

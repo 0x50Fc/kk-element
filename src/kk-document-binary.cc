@@ -30,6 +30,7 @@ namespace kk {
     
     static kk::script::Method methods[] = {
         {"data",(kk::script::Function) &DocumentBinaryObserver::duk_data},
+        {"encode",(kk::script::Function) &DocumentBinaryObserver::duk_encode},
     };
     
     kk::script::SetMethod(ctx, -1, methods, sizeof(methods) / sizeof(kk::script::Method));
@@ -114,14 +115,14 @@ namespace kk {
     }
     
     static void encodeElement(DocumentBinaryObserver * observer,Document * document, Element * element) {
-        
-        observer->alloc(document, element);
-        
+
         encodeAttributes(observer,document,element);
         
         Element * p = element->firstChild();
         
         while(p) {
+            observer->alloc(document, p);
+            observer->append(document, element, p);
             encodeElement(observer, document, p);
             p = p->nextSibling();
         }
@@ -135,6 +136,7 @@ namespace kk {
             std::map<ElementKey,String>::iterator i = keys.begin();
             while(i != keys.end()) {
                 this->key(document, i->first, i->second.c_str());
+                i ++;
             }
         }
         
@@ -142,6 +144,7 @@ namespace kk {
             Element * p = document->rootElement();
             
             if(p != nullptr) {
+                this->alloc(document, p);
                 encodeElement(this,document,p);
             }
             
@@ -227,6 +230,8 @@ namespace kk {
     
     size_t DocumentBinaryObserver::decode(Document * document,Byte * data, size_t size) {
         
+//        kk::Log("[SYNC] >>>>>>>>>>");
+        
         std::map<ElementKey,Strong> elements;
     
         size_t n = 0;
@@ -257,8 +262,12 @@ namespace kk {
                     n += Bio::decode(& length, data + n, size - n);
                     
                     if(elementId && length > 0) {
-                        Strong v = document->createElement(data + n, elementId);
-                        elements[elementId] = v.get();
+                        Strong v = document->element(elementId);
+                        if(v.get() == nullptr) {
+                            Strong vv = document->createElement(data + n, elementId);
+                            elements[elementId] = vv.get();
+//                            kk::Log("[SYNC] [ALLOC] %lld %s",elementId,data + n);
+                        }
                     } else {
                         kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [ALLOC]");
                         break;
@@ -281,6 +290,8 @@ namespace kk {
      
                     document->setRootElement((Element *) e.get());
                     
+//                    kk::Log("[SYNC] [ROOT] %lld",elementId);
+                    
                 } else {
                     break;
                 }
@@ -302,7 +313,12 @@ namespace kk {
                     
                     if(element != nullptr) {
                     
-                        element->set(key, length == 0 ? nullptr : data + n);
+                        CString skey = document->key(key);
+                        
+                        if(skey != nullptr) {
+                            element->set(skey, length == 0 ? nullptr : data + n);
+//                            kk::Log("[SYNC] [SET] %lld %s=%s",elementId,skey, length == 0 ? "" : data + n);
+                        }
                         
                     } else {
                         kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [SET]");
@@ -332,12 +348,13 @@ namespace kk {
                         Strong ee = document->element(eid);
                         Element * el = (Element *) ee.get();
                         
-                        if(el != nullptr) {
+                        if(el != nullptr && el->parent() != element) {
                             element->append(el);
+//                            kk::Log("[SYNC] [APPEND] %lld %lld",elementId,eid);
                         }
                         
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND]");
+                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND] %lld %lld",elementId,eid);
                         break;
                     }
                     
@@ -362,7 +379,7 @@ namespace kk {
                         Strong ee = document->element(eid);
                         Element * el = (Element *) ee.get();
                         
-                        if(el != nullptr) {
+                        if(el != nullptr && el->nextSibling() != element) {
                             element->before(el);
                         }
                         
@@ -392,7 +409,7 @@ namespace kk {
                         Strong ee = document->element(eid);
                         Element * el = (Element *) ee.get();
                         
-                        if(el != nullptr) {
+                        if(el != nullptr && el->prevSibling() != element) {
                             element->after(el);
                         }
                         
@@ -416,6 +433,8 @@ namespace kk {
                     Element * element = (Element *) e.get();
                     
                     if(element != nullptr) {
+                        
+                        elements[elementId] = element;
                         
                         element->remove();
                         
@@ -457,6 +476,8 @@ namespace kk {
             
             
         }
+        
+//        kk::Log("[SYNC] <<<<<<<<");
         
         return n;
     }

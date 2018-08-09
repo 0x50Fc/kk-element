@@ -84,6 +84,8 @@ namespace kk {
         virtual kk::Object * object(CString key);
         virtual void setObject(CString key,kk::Object * object);
         
+        virtual String toString();
+        
         virtual duk_ret_t duk_set(duk_context * ctx);
         virtual duk_ret_t duk_get(duk_context * ctx);
         virtual duk_ret_t duk_firstChild(duk_context * ctx);
@@ -101,6 +103,8 @@ namespace kk {
     
         virtual duk_ret_t duk_object(duk_context * ctx);
         virtual duk_ret_t duk_setObject(duk_context * ctx);
+        
+        virtual duk_ret_t duk_toString(duk_context * ctx);
         
         DEF_SCRIPT_CLASS_NOALLOC
         
@@ -123,6 +127,8 @@ namespace kk {
         
         std::map<String,String> _attributes;
         std::map<String,Strong> _objects;
+        
+        Int _depth;
     };
     
     
