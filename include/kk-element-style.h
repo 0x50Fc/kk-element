@@ -30,7 +30,7 @@ namespace kk {
         
         KK_DEF_ELEMENT_CREATE(StyleElement)
         
-        virtual std::map<String,String> & style(CString name);
+        virtual std::map<String,String>& style(CString name);
         virtual CString status();
         virtual void setStatus(CString status);
         virtual void addStatus(CString status);

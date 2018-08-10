@@ -180,6 +180,9 @@ namespace kk {
     }
     
     DocumentObserver * Document::getObserver() {
+        if(_observers.empty()) {
+            return nullptr;
+        }
         return _observers.back();
     }
     
