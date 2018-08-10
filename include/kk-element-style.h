@@ -53,6 +53,7 @@ namespace kk {
         DEF_SCRIPT_CLASS_NOALLOC
         
     protected:
+        virtual void onDidAddChildren(Element * element);
         virtual void change(kk::CString key,CString value);
         std::map<String,std::map<String,String>> _styles;
     };

@@ -123,6 +123,7 @@ namespace kk {
     kk::script::SetMethod(ctx, -1, methods, sizeof(methods) / sizeof(kk::script::Method));
     
     static kk::script::Property propertys[] = {
+        {"id",(kk::script::Function) &Element::duk_id,(kk::script::Function) nullptr},
         {"firstChild",(kk::script::Function) &Element::duk_firstChild,(kk::script::Function) nullptr},
         {"lastChild",(kk::script::Function) &Element::duk_lastChild,(kk::script::Function) nullptr},
         {"nextSibling",(kk::script::Function) &Element::duk_nextSibling,(kk::script::Function) nullptr},
@@ -775,6 +776,11 @@ namespace kk {
     duk_ret_t Element::duk_toString(duk_context * ctx) {
         String v = toString();
         duk_push_lstring(ctx, v.c_str(), v.size());
+        return 1;
+    }
+    
+    duk_ret_t Element::duk_id(duk_context * ctx) {
+        duk_push_sprintf(ctx, "%lld",_elementId);
         return 1;
     }
     

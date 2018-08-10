@@ -269,7 +269,7 @@ namespace kk {
 //                            kk::Log("[SYNC] [ALLOC] %lld %s",elementId,data + n);
                         }
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [ALLOC]");
+//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [ALLOC]");
                         break;
                     }
                     
@@ -321,7 +321,7 @@ namespace kk {
                         }
                         
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [SET]");
+//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [SET]");
                         break;
                     }
                     
@@ -354,7 +354,7 @@ namespace kk {
                         }
                         
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND] %lld %lld",elementId,eid);
+//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND] %lld %lld",elementId,eid);
                         break;
                     }
                     
@@ -384,7 +384,7 @@ namespace kk {
                         }
                         
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [BEFORE]");
+//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [BEFORE]");
                         break;
                     }
                     
@@ -414,7 +414,7 @@ namespace kk {
                         }
                         
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [AFTER]");
+//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [AFTER]");
                         break;
                     }
                     
@@ -439,7 +439,7 @@ namespace kk {
                         element->remove();
                         
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [REMOVE]");
+//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [REMOVE]");
                         break;
                     }
                     
@@ -458,7 +458,7 @@ namespace kk {
                     if(key && length > 0) {
                         document->set((CString) (data + n), key);
                     } else {
-                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [KEY]");
+//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [KEY]");
                         break;
                     }
                     

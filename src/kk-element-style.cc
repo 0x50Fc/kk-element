@@ -321,5 +321,21 @@ namespace kk {
         return _styles[name];
     }
     
+    void StyleElement::onDidAddChildren(Element * element) {
+        Element::onDidAddChildren(element);
+        
+        CString value = Element::get("status");
+        
+        if(value != nullptr) {
+            
+            CString v = element->get("status");
+            
+            if(v == nullptr) {
+                element->set("in-status", value);
+            }
+            
+        }
+    }
+    
 }
 

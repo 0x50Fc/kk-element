@@ -35,7 +35,7 @@ namespace kk {
     IMP_SCRIPT_CLASS_END
     
     
-    Document::Document():_autoKey(0) {
+    Document::Document():_autoKey(0),_defaultCreateElementFunc(nullptr) {
         
     }
     
@@ -99,6 +99,9 @@ namespace kk {
         if(func) {
             v = (*func)(this,name,elementId);
             assert(v.as<Element>() != nullptr);
+        } else if(_defaultCreateElementFunc) {
+            v = (*_defaultCreateElementFunc)(this,name,elementId);
+            assert(v.as<Element>() != nullptr);
         } else {
             v = new Element(this,name,elementId);
         }
@@ -129,6 +132,10 @@ namespace kk {
     
     Strong Document::createElement(CString name) {
         return createElement(name, 0);
+    }
+    
+    void Document::set(DocumentCreateElementFunc func) {
+        _defaultCreateElementFunc = func;
     }
     
     void Document::set(CString name,DocumentCreateElementFunc func) {

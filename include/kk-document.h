@@ -63,6 +63,7 @@ namespace kk {
         virtual Strong createElement(CString name,ElementKey elementId);
         virtual Strong element(ElementKey elementId);
         virtual void elementsByName(CString name,std::list<Strong> & elements);
+        virtual void set(DocumentCreateElementFunc func);
         virtual void set(CString name,DocumentCreateElementFunc func);
         virtual void set(CString name,CString library);
         virtual void set(CString name,ElementKey key);
@@ -97,6 +98,7 @@ namespace kk {
         std::list<DocumentObserver *> _observers;
         std::map<ElementKey,Weak> _elements;
         std::map<String,std::list<Weak>> _elementsByName;
+        DocumentCreateElementFunc _defaultCreateElementFunc;
     };
     
     

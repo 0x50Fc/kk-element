@@ -106,6 +106,8 @@ namespace kk {
         
         virtual duk_ret_t duk_toString(duk_context * ctx);
         
+        virtual duk_ret_t duk_id(duk_context * ctx);
+        
         DEF_SCRIPT_CLASS_NOALLOC
         
     protected:
