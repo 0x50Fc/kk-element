@@ -228,6 +228,10 @@ namespace kk {
         
         CString value = Element::get("status");
         
+        if(value == nullptr) {
+            value = Element::get("in-status");
+        }
+        
         if(value != nullptr) {
             CStringSplit(value, " ", vs);
         }
