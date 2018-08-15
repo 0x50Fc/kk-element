@@ -2,7 +2,7 @@
 //  KKDuktape.h
 //  KKDuktape
 //
-//  Created by hailong11 on 2018/8/2.
+//  Created by zhanghailong on 2018/8/2.
 //  Copyright © 2018年 kkmofang.cn. All rights reserved.
 //
 

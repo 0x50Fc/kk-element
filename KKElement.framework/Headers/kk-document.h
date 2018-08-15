@@ -61,15 +61,21 @@ namespace kk {
         virtual void setRootElement(Element * element);
         virtual Strong createElement(CString name);
         virtual Strong createElement(CString name,ElementKey elementId);
+        virtual Strong element(ElementKey elementId);
+        virtual void elementsByName(CString name,std::list<Strong> & elements);
+        virtual void set(DocumentCreateElementFunc func);
         virtual void set(CString name,DocumentCreateElementFunc func);
         virtual void set(CString name,CString library);
         virtual void set(CString name,ElementKey key);
-        virtual ElementKey key(CString name);
+        virtual ElementKey elementKey(CString name);
+        virtual kk::CString key(ElementKey key);
         virtual void beginObserver(DocumentObserver * observer);
         virtual DocumentObserver * getObserver();
         virtual void endObserver();
         
-        virtual std::map<String,ElementKey> & elementKeys();
+        virtual std::map<ElementKey,String> & elementKeys();
+        
+        virtual String toString();
         
         virtual duk_ret_t duk_rootElement(duk_context * ctx);
         virtual duk_ret_t duk_setRootElement(duk_context * ctx);
@@ -77,6 +83,8 @@ namespace kk {
         virtual duk_ret_t duk_beginObserver(duk_context * ctx);
         virtual duk_ret_t duk_endObserver(duk_context * ctx);
         virtual duk_ret_t duk_set(duk_context * ctx);
+        virtual duk_ret_t duk_elementsByName(duk_context * ctx);
+        virtual duk_ret_t duk_toString(duk_context * ctx);
         
         static void library(CString name,DocumentCreateElementFunc func);
         
@@ -85,8 +93,12 @@ namespace kk {
         ElementKey _autoKey;
         Strong _rootElement;
         std::map<String,DocumentCreateElementFunc> _createElementFuncs;
-        std::map<String,ElementKey> _elementKeys;
+        std::map<ElementKey,String> _elementKeys;
+        std::map<String,ElementKey> _keys;
         std::list<DocumentObserver *> _observers;
+        std::map<ElementKey,Weak> _elements;
+        std::map<String,std::list<Weak>> _elementsByName;
+        DocumentCreateElementFunc _defaultCreateElementFunc;
     };
     
     

@@ -22,6 +22,10 @@
 
 #define BUF_EX_SIZE 40960
 
+//#define KK_DEBUG_SYNC(format,...) kk::Log(format,__VA_ARGS__)
+
+#define KK_DEBUG_SYNC(format,...)
+
 namespace kk {
     
     static char TAG[] = {'K','K',0x00,0x00};
@@ -35,7 +39,13 @@ namespace kk {
     
     kk::script::SetMethod(ctx, -1, methods, sizeof(methods) / sizeof(kk::script::Method));
     
-    duk_push_c_function(ctx, DocumentBinaryObserver::duk_decode, 2);
+    static kk::script::Property propertys[] = {
+        {"title",(kk::script::Function) &DocumentBinaryObserver::duk_title,(kk::script::Function) &DocumentBinaryObserver::duk_setTitle},
+    };
+    
+    kk::script::SetProperty(ctx, -1, propertys, sizeof(propertys) / sizeof(kk::script::Property));
+    
+    duk_push_c_function(ctx, DocumentBinaryObserver::duk_decode, 3);
     duk_put_prop_string(ctx, -2, "decode");
     
     IMP_SCRIPT_CLASS_END
@@ -162,6 +172,30 @@ namespace kk {
         return _length;
     }
     
+    kk::CString DocumentBinaryObserver::title() {
+        return _title.c_str();
+    }
+    
+    void DocumentBinaryObserver::setTitle(kk::CString title) {
+        _title = title == nullptr ? "" : title;
+    }
+    
+    duk_ret_t DocumentBinaryObserver::duk_setTitle(duk_context * ctx) {
+        
+        int top = duk_get_top(ctx);
+        
+        if(top >0 && duk_is_string(ctx, -top)) {
+            setTitle(duk_to_string(ctx, -top));
+        }
+        
+        return 0;
+    }
+    
+    duk_ret_t DocumentBinaryObserver::duk_title(duk_context * ctx) {
+        duk_push_string(ctx, _title.c_str());
+        return 1;
+    }
+    
     void DocumentBinaryObserver::append(Byte * data, size_t n) {
        
         presize(n);
@@ -228,9 +262,9 @@ namespace kk {
         }
     }
     
-    size_t DocumentBinaryObserver::decode(Document * document,Byte * data, size_t size) {
+    size_t DocumentBinaryObserver::decode(Document * document,Byte * data, size_t size,kk::CString title) {
         
-//        kk::Log("[SYNC] >>>>>>>>>>");
+        KK_DEBUG_SYNC("[SYNC] >>>>>>>>>>");
         
         std::map<ElementKey,Strong> elements;
     
@@ -239,7 +273,7 @@ namespace kk {
         if(size >= sizeof(TAG)) {
             
             if(memcmp(data, TAG, sizeof(TAG)) != 0) {
-                kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] TAG");
+                KK_DEBUG_SYNC("[DOCUMENT] [BINARY] [DECODE] [ERROR] TAG");
                 return 0;
             }
             
@@ -266,11 +300,10 @@ namespace kk {
                         if(v.get() == nullptr) {
                             Strong vv = document->createElement(data + n, elementId);
                             elements[elementId] = vv.get();
-//                            kk::Log("[SYNC] [ALLOC] %lld %s",elementId,data + n);
+                            KK_DEBUG_SYNC("[SYNC] [ALLOC] %lld %s",elementId,data + n);
                         }
                     } else {
-//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [ALLOC]");
-                        break;
+                        KK_DEBUG_SYNC("[DOCUMENT] [BINARY] [DECODE] [ERROR] [ALLOC]");
                     }
                     
                     n += length;
@@ -290,7 +323,7 @@ namespace kk {
      
                     document->setRootElement((Element *) e.get());
                     
-//                    kk::Log("[SYNC] [ROOT] %lld",elementId);
+                    KK_DEBUG_SYNC("[SYNC] [ROOT] %lld",elementId);
                     
                 } else {
                     break;
@@ -317,12 +350,11 @@ namespace kk {
                         
                         if(skey != nullptr) {
                             element->set(skey, length == 0 ? nullptr : data + n);
-//                            kk::Log("[SYNC] [SET] %lld %s=%s",elementId,skey, length == 0 ? "" : data + n);
+                            KK_DEBUG_SYNC("[SYNC] [SET] %lld %s=%s",elementId,skey, length == 0 ? "" : data + n);
                         }
                         
                     } else {
-//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [SET]");
-                        break;
+                        KK_DEBUG_SYNC("[DOCUMENT] [BINARY] [DECODE] [ERROR] [SET]");
                     }
                     
                     n += length;
@@ -350,12 +382,11 @@ namespace kk {
                         
                         if(el != nullptr && el->parent() != element) {
                             element->append(el);
-//                            kk::Log("[SYNC] [APPEND] %lld %lld",elementId,eid);
+                            KK_DEBUG_SYNC("[SYNC] [APPEND] %lld %lld",elementId,eid);
                         }
                         
                     } else {
-//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND] %lld %lld",elementId,eid);
-                        break;
+                        KK_DEBUG_SYNC("[DOCUMENT] [BINARY] [DECODE] [ERROR] [APPEND] %lld %lld",elementId,eid);
                     }
                     
                 } else {
@@ -384,8 +415,7 @@ namespace kk {
                         }
                         
                     } else {
-//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [BEFORE]");
-                        break;
+                        KK_DEBUG_SYNC("[DOCUMENT] [BINARY] [DECODE] [ERROR] [BEFORE]");
                     }
                     
                 } else {
@@ -414,8 +444,7 @@ namespace kk {
                         }
                         
                     } else {
-//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [AFTER]");
-                        break;
+                        KK_DEBUG_SYNC("[DOCUMENT] [BINARY] [DECODE] [ERROR] [AFTER]");
                     }
                     
                 } else {
@@ -439,8 +468,7 @@ namespace kk {
                         element->remove();
                         
                     } else {
-//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [REMOVE]");
-                        break;
+                        KK_DEBUG_SYNC("[DOCUMENT] [BINARY] [DECODE] [ERROR] [REMOVE]");
                     }
                     
                 } else {
@@ -458,8 +486,7 @@ namespace kk {
                     if(key && length > 0) {
                         document->set((CString) (data + n), key);
                     } else {
-//                        kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [KEY]");
-                        break;
+                        KK_DEBUG_SYNC("[DOCUMENT] [BINARY] [DECODE] [ERROR] [KEY]");
                     }
                     
                     n += length;
@@ -470,14 +497,14 @@ namespace kk {
                 
             } else {
 
-                kk::Log("[DOCUMENT] [BINARY] [DECODE] [ERROR] [TYPE]");
-                break;
+                KK_DEBUG_SYNC("[DOCUMENT] [BINARY] [DECODE] [ERROR] [TYPE]");
+
             }
             
             
         }
         
-//        kk::Log("[SYNC] <<<<<<<<");
+        KK_DEBUG_SYNC("[SYNC] <<<<<<<<");
         
         return n;
     }
@@ -492,7 +519,7 @@ namespace kk {
             memcpy(d, _data, _length);
             
             duk_push_buffer_object(ctx, -1, 0, _length, DUK_BUFOBJ_UINT8ARRAY);
-            
+//
             duk_remove(ctx, -2);
             
             return 1;
@@ -518,8 +545,13 @@ namespace kk {
                     
                     duk_size_t n;
                     Byte * bytes = (Byte *) duk_get_buffer_data(ctx, - top + 1, &n);
+                    kk::CString title = nullptr;
                     
-                    DocumentBinaryObserver::decode(doc, bytes, n);
+                    if(top > 2 && duk_is_string(ctx, - top + 2)) {
+                        title = duk_to_string(ctx, -top + 2);
+                    }
+                    
+                    DocumentBinaryObserver::decode(doc, bytes, n,title);
                     
                 }
                 

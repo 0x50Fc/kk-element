@@ -17,23 +17,27 @@
 #else
 
 #include "kk-element.h"
+#include "kk-string.h"
 
 #endif
+
 
 namespace kk {
     
     
     class StyleElement : public Element {
     public:
-        StyleElement(Document * document,CString name, ElementKey elementId);
         
-        virtual std::map<String,String> & style(String& name);
+        KK_DEF_ELEMENT_CREATE(StyleElement)
+        
+        virtual std::map<String,String>& style(CString name);
         virtual CString status();
         virtual void setStatus(CString status);
         virtual void addStatus(CString status);
         virtual void removeStatus(CString status);
         virtual Boolean hasStatus(CString status);
         virtual void changedStatus();
+        virtual void changedKey(String& key);
         virtual void changedKeys(std::set<String>& keys);
         virtual CString get(CString key);
         virtual CString get(ElementKey key);
@@ -45,15 +49,13 @@ namespace kk {
         virtual duk_ret_t duk_changedStatus(duk_context * ctx);
         virtual duk_ret_t duk_hasStatus(duk_context * ctx);
         
-        static Element * Create(Document * document,CString name, ElementKey elementId);
         
-        DEF_SCRIPT_CLASS
+        DEF_SCRIPT_CLASS_NOALLOC
         
     protected:
-        StyleElement();
+        virtual void onDidAddChildren(Element * element);
+        virtual void change(kk::CString key,CString value);
         std::map<String,std::map<String,String>> _styles;
-        ElementKey _keyStatus;
-        ElementKey _keyInStatus;
     };
     
 }

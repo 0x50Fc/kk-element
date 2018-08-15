@@ -39,12 +39,20 @@ namespace kk {
         virtual Byte * data();
         virtual size_t length();
         
-        static size_t decode(Document * document,Byte * data, size_t size);
+        virtual kk::CString title();
+        virtual void setTitle(kk::CString title);
+        
+        static size_t decode(Document * document,Byte * data, size_t size,kk::CString title);
         
         virtual duk_ret_t duk_data(duk_context * ctx);
         virtual duk_ret_t duk_encode(duk_context * ctx);
         
+        virtual duk_ret_t duk_setTitle(duk_context * ctx);
+        virtual duk_ret_t duk_title(duk_context * ctx);
+        
         static duk_ret_t duk_decode(duk_context * ctx);
+        
+        
         
         DEF_SCRIPT_CLASS
         
@@ -63,6 +71,8 @@ namespace kk {
         Byte * _data;
         size_t _length;
         size_t _size;
+        
+        kk::String _title;
     };
     
 }
