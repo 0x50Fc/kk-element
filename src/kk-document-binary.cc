@@ -22,9 +22,9 @@
 
 #define BUF_EX_SIZE 40960
 
-//#define KK_DEBUG_SYNC(format,...) kk::Log(format,__VA_ARGS__)
+//#define KK_DEBUG_SYNC(...) kk::Log(__VA_ARGS__)
 
-#define KK_DEBUG_SYNC(format,...)
+#define KK_DEBUG_SYNC(...)
 
 namespace kk {
     
