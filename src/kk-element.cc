@@ -129,6 +129,7 @@ namespace kk {
         {"nextSibling",(kk::script::Function) &Element::duk_nextSibling,(kk::script::Function) nullptr},
         {"prevSibling",(kk::script::Function) &Element::duk_prevSibling,(kk::script::Function) nullptr},
         {"parent",(kk::script::Function) &Element::duk_parent,(kk::script::Function) nullptr},
+        {"attributes",(kk::script::Function) &Element::duk_attributes,(kk::script::Function) nullptr},
     };
     
     kk::script::SetProperty(ctx, -1, propertys, sizeof(propertys) / sizeof(kk::script::Property));
@@ -717,6 +718,24 @@ namespace kk {
         }
         
         return 0;
+    }
+    
+    duk_ret_t Element::duk_attributes(duk_context * ctx) {
+        
+        duk_push_object(ctx);
+        
+        std::map<String,String>::iterator i = _attributes.begin();
+        
+        while(i != _attributes.end()) {
+            
+            duk_push_string(ctx, i->first.c_str());
+            duk_push_string(ctx, i->second.c_str());
+            duk_put_prop(ctx, -3);
+            
+            i ++;
+        }
+        
+        return 1;
     }
     
     String Element::toString() {
