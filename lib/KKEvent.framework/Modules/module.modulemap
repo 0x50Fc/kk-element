@@ -1,6 +1,0 @@
-framework module KKEvent {
-  umbrella header "KKEvent.h"
-
-  export *
-  module * { export * }
-}
